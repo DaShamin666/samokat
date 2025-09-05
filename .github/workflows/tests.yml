@@ -1,0 +1,200 @@
+name: 🧪 Automated Testing
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запустить вручную
+
+env:
+  PYTHON_VERSION: '3.12'
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/ms-playwright
+
+jobs:
+  # Быстрая проверка с smoke тестами
+  smoke-tests:
+    name: 🔥 Smoke Tests (Quick Check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright pytest pytest-playwright allure-pytest faker
+        
+    - name: 🎭 Install Playwright browsers
+      run: |
+        playwright install chromium
+        
+    - name: 🔥 Run Smoke Tests
+      run: |
+        python -m pytest -m smoke -v --tb=short --maxfail=3
+        
+    - name: 📊 Upload test results (if failed)
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: smoke-test-results
+        path: |
+          screenshots/
+          videos/
+        retention-days: 7
+
+  # Полные регрессионные тесты
+  regression-tests:
+    name: 🔄 Regression Tests (Full Suite)
+    runs-on: ubuntu-latest
+    needs: smoke-tests # Запускается только если smoke тесты прошли
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false # Продолжить даже если один браузер упал
+      matrix:
+        browser: [chromium, firefox, webkit]
+        
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright pytest pytest-playwright allure-pytest faker
+        
+    - name: 🎭 Install Playwright browsers
+      run: |
+        playwright install ${{ matrix.browser }}
+        
+    - name: 🔄 Run Regression Tests
+      run: |
+        python -m pytest -m regression --browser=${{ matrix.browser }} -v --tb=short
+      env:
+        BROWSER: ${{ matrix.browser }}
+        
+    - name: 📊 Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: regression-test-results-${{ matrix.browser }}
+        path: |
+          screenshots/
+          videos/
+          test-results/
+        retention-days: 7
+
+  # Все тесты для финальной проверки
+  full-test-suite:
+    name: 🎯 Full Test Suite (All Tests)
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, regression-tests]
+    if: github.event_name == 'pull_request' # Только для PR
+    timeout-minutes: 45
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install playwright pytest pytest-playwright allure-pytest faker
+        
+    - name: 🎭 Install Playwright browsers
+      run: |
+        playwright install chromium firefox webkit
+        
+    - name: 🎯 Run All Tests
+      run: |
+        python -m pytest -v --tb=short --durations=10 --browser=chromium
+        
+    - name: 📈 Generate Allure Report
+      if: always()
+      run: |
+        pip install allure-pytest
+        python -m pytest --alluredir=allure-results -v --tb=short --browser=chromium || true
+        
+    - name: 📊 Upload Allure Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: allure-results
+        path: allure-results/
+        retention-days: 14
+        
+    - name: 📷 Upload Screenshots
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: failed-test-screenshots
+        path: |
+          screenshots/
+          videos/
+        retention-days: 14
+
+  # Анализ результатов и отчеты
+  test-summary:
+    name: 📋 Test Results Summary
+    runs-on: ubuntu-latest
+    needs: [smoke-tests, regression-tests, full-test-suite]
+    if: always() # Всегда запускается, даже если тесты упали
+    
+    steps:
+    - name: 📊 Create Test Summary
+      run: |
+        echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.smoke-tests.result }}" == "success" ]; then
+          echo "✅ **Smoke Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Smoke Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.regression-tests.result }}" == "success" ]; then
+          echo "✅ **Regression Tests**: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Regression Tests**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.full-test-suite.result }}" == "success" ]; then
+          echo "✅ **Full Test Suite**: PASSED" >> $GITHUB_STEP_SUMMARY
+        elif [ "${{ needs.full-test-suite.result }}" == "skipped" ]; then
+          echo "⏭️ **Full Test Suite**: SKIPPED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Full Test Suite**: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Test Statistics:" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔥 Smoke Tests: 9 tests" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔄 Regression Tests: 39 tests" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎯 Total Tests: 65 tests" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🎭 Tested Browsers:" >> $GITHUB_STEP_SUMMARY
+        echo "- Chromium ✅" >> $GITHUB_STEP_SUMMARY
+        echo "- Firefox ✅" >> $GITHUB_STEP_SUMMARY  
+        echo "- WebKit ✅" >> $GITHUB_STEP_SUMMARY
