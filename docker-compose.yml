@@ -12,9 +12,6 @@ services:
       - TEST_ENV=${TEST_ENV:-dev}
       - TEST_MARKERS=${TEST_MARKERS:-smoke}
       - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short}
-      # Playwright конфигурация
-      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-      - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
       # Дополнительные переменные окружения
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
@@ -107,3 +104,4 @@ volumes:
   allure-results:
   allure-reports:
   screenshots:
+
