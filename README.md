@@ -128,11 +128,7 @@ def test_example(app, test_user):
     pass
 ```
 
-## 📚 Документация
 
-- [🏷️ Pytest Markers Guide](PYTEST_MARKERS_GUIDE.md)
-- [🚀 CI/CD Guide](CI_CD_GUIDE.md)
-- [🛴 Usage Examples](USAGE_EXAMPLES.md)
 
 ## 🤝 Контрибьюция
 

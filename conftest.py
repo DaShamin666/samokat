@@ -54,7 +54,7 @@ def app(page: Page):
     # Обработка cookie consent баннера если он есть
     try:
         cookie_consent = page.locator("div.App_CookieConsent__1yUIN")
-        if cookie_consent.is_visible(timeout=2000):
+        if cookie_consent.is_visible():
             # Ищем кнопку принятия cookies (может быть разные варианты)
             accept_buttons = [
                 "button:has-text('Принять')",
@@ -65,7 +65,7 @@ def app(page: Page):
             ]
             for selector in accept_buttons:
                 try:
-                    page.locator(selector).click(timeout=1000)
+                    page.locator(selector).click()
                     break
                 except:
                     continue
@@ -78,50 +78,10 @@ def app(page: Page):
 def click_accordion_buttons(app):
     """
     Фикстура для тестирования кликов по кнопкам аккордеона.
-    Возвращает функцию, которая выполняет клики и проверки для всех кнопок FAQ.
+    Переиспользует метод из HomePage.
     """
     def _click_buttons():
-        home_page = app.home_page
-        
-        # Клик по кнопке "Сколько это стоит? И как оплатить?"
-        home_page.how_much_button.click()
-        expect(home_page.how_much_button).to_be_visible()
-        expect(home_page.texts["how_much"]).to_be_visible()
-
-        # Клик по кнопке "Хочу заказать несколько самокатов"
-        home_page.several_scooters.click()
-        expect(home_page.several_scooters).to_be_visible()
-        expect(home_page.texts["several_scooters"]).to_be_visible()
-
-        # Клик по кнопке "Как рассчитывается время аренды?"
-        home_page.time_arenda.click()
-        expect(home_page.time_arenda).to_be_visible()
-        expect(home_page.texts["time_arenda"]).to_be_visible()
-
-        # Клик по кнопке "Можно ли заказать самокат прямо на сегодня?"
-        home_page.zakaz_today.click()
-        expect(home_page.zakaz_today).to_be_visible()
-        expect(home_page.texts["zakaz_today"]).to_be_visible()
-
-        # Клик по кнопке "Можно ли продлить заказ или вернуть самокат раньше?"
-        home_page.prodlit_and_vernut.click()
-        expect(home_page.prodlit_and_vernut).to_be_visible()
-        expect(home_page.texts["prodlit_and_vernut"]).to_be_visible()
-
-        # Клик по кнопке "Вы привозите зарядку вместе с самокатом?"
-        home_page.zarydka_on_samokat.click()
-        expect(home_page.zarydka_on_samokat).to_be_visible()
-        expect(home_page.texts["zarydka_on_samokat"]).to_be_visible()
-
-        # Клик по кнопке "Можно ли отменить заказ?"
-        home_page.otmena_zakaza.click()
-        expect(home_page.otmena_zakaza).to_be_visible()
-        expect(home_page.texts["otmena_zakaza"]).to_be_visible()
-
-        # Клик по кнопке "Я живу за МКАДом, привезёте?"
-        home_page.zamkadish.click()
-        expect(home_page.zamkadish).to_be_visible()
-        expect(home_page.texts["zamkadish"]).to_be_visible()
+        app.home_page.click_all_accordion_buttons()
     
     return _click_buttons
 
@@ -161,24 +121,10 @@ def any_user(request):
 def fill_order_form_step1(app):
     """
     Фикстура для заполнения первого шага формы заказа.
-    Возвращает функцию, которая принимает пользователя и заполняет форму.
+    Переиспользует метод из OrderPage.
     """
-    def _fill_form(user_data, metro_station="Сокольники"):
-        order_page = app.order_page
-        
-        # Заполняем личные данные
-        order_page.name_input.fill(user_data.name)
-        order_page.surname_input.fill(user_data.surname)
-        order_page.adres_input.fill(user_data.address)
-        
-        # Выбираем станцию метро
-        order_page.select_metro_station(metro_station)
-        
-        # Вводим телефон
-        order_page.phone_input.fill("+79991234567")  # Можно добавить в UserCredentials
-        
-        # Нажимаем "Далее" (force=True чтобы обойти cookie consent)
-        order_page.next_button.click(force=True)
+    def _fill_form(user_data=None, metro_station="Сокольники"):
+        app.order_page.fill_step1_form_simple(metro_station)
     
     return _fill_form
 
@@ -186,25 +132,12 @@ def fill_order_form_step1(app):
 def fill_order_form_step2(app):
     """
     Фикстура для заполнения второго шага формы заказа.
+    Переиспользует метод из OrderPage.
     """
     def _fill_form(delivery_date="01.12.2024", rental_period="сутки", comment=""):
-        order_page = app.order_page
-        
-        # Заполняем дату доставки
-        order_page.enter_date(delivery_date)
-        
-        # Выбираем срок аренды
-        order_page.select_rental_period(rental_period)
-        
-        # Выбираем цвет (чекбокс)
-        order_page.checkbox.check()
-        
-        # Добавляем комментарий (если есть)
-        if comment:
-            order_page.comment_input.fill(comment)
-        
-        # Подтверждаем заказ (force=True чтобы обойти возможные проблемы)
-        order_page.confirm_button.click(force=True)
+        app.order_page.fill_step2_form(delivery_date, rental_period, comment)
+        # Подтверждаем заказ
+        app.order_page.confirm_button.click(force=True)
     
     return _fill_form
 
@@ -268,10 +201,9 @@ def complete_order_from_button(app, click_order_button, complete_order_flow):
         
         # Обработка cookie consent баннера если он появился
         try:
-            cookie_consent = app.page.locator("div.App_CookieConsent__1yUIN")
-            if cookie_consent.is_visible(timeout=2000):
-                # Пытаемся закрыть баннер или принять cookies
-                app.page.locator("div.App_CookieConsent__1yUIN").press("Escape")
+            cookie_accept = app.page.locator("button#rcc-confirm-button")
+            cookie_accept.wait_for(state='visible')
+            cookie_accept.click()
         except:
             pass
         

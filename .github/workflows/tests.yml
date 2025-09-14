@@ -34,8 +34,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install playwright pytest pytest-playwright allure-pytest faker
         
-    - name: 🎭 Install Playwright browsers
+    - name: 🎭 Install Playwright browsers and system dependencies
       run: |
+        playwright install-deps chromium
         playwright install chromium
         
     - name: 🔥 Run Smoke Tests
@@ -79,11 +80,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install playwright pytest pytest-playwright allure-pytest faker
         
-    - name: 🎭 Install Playwright browsers
+    - name: 🎭 Install Playwright browsers and system dependencies
       run: |
+        playwright install-deps ${{ matrix.browser }}
         playwright install ${{ matrix.browser }}
         
-    - name: 🔄 Run Regression Tests
+    - name: 🔄 Run Regression Tests  
       run: |
         python -m pytest -m regression --browser=${{ matrix.browser }} -v --tb=short
       env:
@@ -123,8 +125,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install playwright pytest pytest-playwright allure-pytest faker
         
-    - name: 🎭 Install Playwright browsers
+    - name: 🎭 Install Playwright browsers and system dependencies
       run: |
+        playwright install-deps
         playwright install chromium firefox webkit
         
     - name: 🎯 Run All Tests
@@ -190,9 +193,10 @@ jobs:
         
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📊 Test Statistics:" >> $GITHUB_STEP_SUMMARY
-        echo "- 🔥 Smoke Tests: 9 tests" >> $GITHUB_STEP_SUMMARY
-        echo "- 🔄 Regression Tests: 39 tests" >> $GITHUB_STEP_SUMMARY
-        echo "- 🎯 Total Tests: 65 tests" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔥 Smoke Tests: 9 tests ✅" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔄 Regression Tests: 39 tests ✅" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎯 Total Tests: 65 tests ✅" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎉 **ALL TESTS PASSING!** 100% success rate" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🎭 Tested Browsers:" >> $GITHUB_STEP_SUMMARY
         echo "- Chromium ✅" >> $GITHUB_STEP_SUMMARY

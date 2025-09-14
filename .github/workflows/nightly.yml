@@ -45,8 +45,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install playwright pytest pytest-playwright allure-pytest faker
         
-    - name: 🎭 Install Playwright browsers
+    - name: 🎭 Install Playwright browsers and system dependencies
       run: |
+        playwright install-deps ${{ matrix.browser }}
         playwright install ${{ matrix.browser }}
         
     - name: 🌙 Run Full Test Suite

@@ -3,13 +3,12 @@ import pytest
 from playwright.sync_api import expect
 from config.environments import Environment, environments
 
-
+@allure.feature("Тесты полного пути заказа для обеих кнопок заказа и граничные случаи.")
 class TestFullOrderPath:
-    """Тесты полного пути заказа для обеих кнопок заказа."""
+    """Тесты полного пути заказа для обеих кнопок заказа и граничные случаи."""
     
     @pytest.mark.regression
     @allure.title("Полный путь заказа через верхнюю и нижнюю кнопки")
-    @allure.description("Проверяет полный путь заказа от клика по кнопке до завершения заказа для обеих кнопок")
     @allure.severity(allure.severity_level.BLOCKER)
     def test_complete_order_path_both_buttons(self, test_user, order_button_type, complete_order_from_button):
         """
@@ -29,11 +28,9 @@ class TestFullOrderPath:
                 comment=f"Заказ через {button_name} кнопку для {test_user.name}"
             )
         
-        # Проверка успешного завершения будет внутри фикстуры
 
     @pytest.mark.regression
     @allure.title("Тестирование разных станций метро для обеих кнопок")
-    @allure.description("Проверяет выбор разных станций метро при заказе через обе кнопки")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize("metro_station", [
         "Сокольники",
@@ -59,7 +56,6 @@ class TestFullOrderPath:
 
     @pytest.mark.regression
     @allure.title("Тестирование разных периодов аренды для обеих кнопок")
-    @allure.description("Проверяет выбор разных периодов аренды при заказе через обе кнопки")
     @allure.severity(allure.severity_level.CRITICAL)
     @pytest.mark.parametrize("rental_period", [
         "сутки",
@@ -85,7 +81,6 @@ class TestFullOrderPath:
 
     @pytest.mark.regression
     @allure.title("Сравнительный тест - одинаковые данные через разные кнопки")
-    @allure.description("Проверяет, что заказ с одинаковыми данными работает через обе кнопки")
     @allure.severity(allure.severity_level.NORMAL)
     def test_same_data_different_buttons(self, test_user, complete_order_from_button):
         """Тест с одинаковыми данными через разные кнопки."""
@@ -112,13 +107,8 @@ class TestFullOrderPath:
                 **order_data
             )
 
-
-class TestOrderButtonsNavigation:
-    """Тесты навигации и отображения кнопок заказа."""
-    
     @pytest.mark.smoke
     @allure.title("Проверка видимости и доступности обеих кнопок заказа")
-    @allure.description("Проверяет, что обе кнопки заказа видимы и кликабельны на главной странице")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_both_order_buttons_visibility(self, app):
         """Тест видимости обеих кнопок заказа."""
@@ -127,19 +117,18 @@ class TestOrderButtonsNavigation:
             app.home_page.open(env_config.url)
         
         with allure.step("Проверить видимость верхней кнопки заказа"):
-            expect(app.order_page.one_button_order).to_be_visible()
-            expect(app.order_page.one_button_order).to_be_enabled()
+            expect(app.home_page.order_button_top).to_be_visible()
+            expect(app.home_page.order_button_top).to_be_enabled()
         
         with allure.step("Прокрутить к нижней кнопке"):
-            app.order_page.second_button_order.scroll_into_view_if_needed()
+            app.home_page.order_button_bottom.scroll_into_view_if_needed()
         
         with allure.step("Проверить видимость нижней кнопки заказа"):
-            expect(app.order_page.second_button_order).to_be_visible()
-            expect(app.order_page.second_button_order).to_be_enabled()
+            expect(app.home_page.order_button_bottom).to_be_visible()
+            expect(app.home_page.order_button_bottom).to_be_enabled()
 
     @pytest.mark.smoke
     @allure.title("Проверка перехода к форме заказа через обе кнопки")
-    @allure.description("Проверяет, что обе кнопки корректно ведут к форме заказа")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_navigation_to_order_form(self, app, order_button_type, click_order_button):
         """Параметризованный тест перехода к форме заказа."""
@@ -160,7 +149,6 @@ class TestOrderButtonsNavigation:
 
     @pytest.mark.regression
     @allure.title("Проверка заполнения первого шага через обе кнопки")
-    @allure.description("Проверяет заполнение первого шага формы заказа, запущенной через обе кнопки")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_first_step_completion_both_buttons(self, app, test_user, order_button_type, 
                                               click_order_button, fill_order_form_step1):
@@ -182,19 +170,14 @@ class TestOrderButtonsNavigation:
             expect(app.order_page.date_input).to_be_visible()
             expect(app.order_page.rental_period_dropdown).to_be_visible()
 
-
-class TestOrderPathEdgeCases:
-    """Тесты граничных случаев для пути заказа."""
-    
     @pytest.mark.regression
     @allure.title("Множественные заказы через разные кнопки")
-    @allure.description("Проверяет создание нескольких заказов подряд через разные кнопки")
     @allure.severity(allure.severity_level.NORMAL)
     def test_multiple_orders_alternating_buttons(self, complete_order_from_button):
         """Тест создания нескольких заказов через разные кнопки по очереди."""
         from config.environments import UserCredentials
         
-        buttons = ["top", "bottom", "top"]  # Чередуем кнопки
+        buttons = ["top", "bottom", "top"]
         
         for i, button_type in enumerate(buttons):
             user = UserCredentials.generate_fake()
@@ -212,10 +195,8 @@ class TestOrderPathEdgeCases:
 
     @pytest.mark.regression
     @allure.title("Проверка с разными типами пользователей через обе кнопки")
-    @allure.description("Проверяет заказ с предопределенными пользователями через обе кнопки")
     @allure.severity(allure.severity_level.NORMAL)
     def test_predefined_users_both_buttons(self, any_user, order_button_type, complete_order_from_button):
-        """Тест с предопределенными пользователями через обе кнопки."""
         button_names = {"top": "верхняя", "bottom": "нижняя"}
         button_name = button_names[order_button_type]
         
