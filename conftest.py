@@ -179,6 +179,9 @@ def fill_order_form_step1(app):
         
         # Нажимаем "Далее" (force=True чтобы обойти cookie consent)
         order_page.next_button.click(force=True)
+        
+        # Ждем исчезновения элементов первого шага и появления элементов второго шага
+        app.page.wait_for_load_state('networkidle')
     
     return _fill_form
 
@@ -189,6 +192,13 @@ def fill_order_form_step2(app):
     """
     def _fill_form(delivery_date="01.12.2024", rental_period="сутки", comment=""):
         order_page = app.order_page
+        
+        # Дополнительное ожидание стабилизации страницы
+        app.page.wait_for_load_state('networkidle')
+        
+        # Ждем появления заголовка "Про аренду" (второй шаг)
+        pro_arendu_header = app.page.locator("div.Order_Header__BZXOb:has-text('Про аренду')")
+        pro_arendu_header.wait_for(state='visible', timeout=15000)
         
         # Заполняем дату доставки
         order_page.enter_date(delivery_date)
@@ -268,10 +278,9 @@ def complete_order_from_button(app, click_order_button, complete_order_flow):
         
         # Обработка cookie consent баннера если он появился
         try:
-            cookie_consent = app.page.locator("div.App_CookieConsent__1yUIN")
-            if cookie_consent.is_visible(timeout=2000):
-                # Пытаемся закрыть баннер или принять cookies
-                app.page.locator("div.App_CookieConsent__1yUIN").press("Escape")
+            cookie_accept = app.page.locator("button#rcc-confirm-button")
+            cookie_accept.wait_for(state='visible', timeout=3000)
+            cookie_accept.click()
         except:
             pass
         

@@ -53,9 +53,20 @@ class OrderPage(BasePage):
     
     def enter_date(self, date: str):
         """Вводит дату доставки."""
-        self.date_input.fill(date)
+        # Ждем, пока поле станет доступным для ввода
+        self.date_input.wait_for(state='visible', timeout=10000)
+        
+        # Кликаем по полю перед заполнением
+        self.date_input.click()
+        
+        # Заполняем дату с force=True для надежности
+        self.date_input.fill(date, force=True)
+        
+        # Закрываем календарь, кликнув в другое место
+        self.page.click("body")
+        self.page.wait_for_timeout(500)  # Небольшая пауза для закрытия календаря
         
     def select_rental_period(self, period_name: str):
         """Выбирает срок аренды из выпадающего списка."""
-        self.rental_period_dropdown.click()
+        self.rental_period_dropdown.click(force=True)
         self.rental_period_option.locator(f"text='{period_name}'").click()
