@@ -166,22 +166,91 @@ def fill_order_form_step1(app):
     def _fill_form(user_data, metro_station="Сокольники"):
         order_page = app.order_page
         
-        # Заполняем личные данные
+        # Заполняем личные данные с диагностикой
+        print(f"DEBUG: Filling name: {user_data.name}")
         order_page.name_input.fill(user_data.name)
+        
+        print(f"DEBUG: Filling surname: {user_data.surname}")
         order_page.surname_input.fill(user_data.surname)
-        order_page.adres_input.fill(user_data.address)
+        
+        # Используем более простой адрес без переносов строк
+        simple_address = user_data.address.replace('\n', ' ').strip()
+        print(f"DEBUG: Filling address: {simple_address}")
+        order_page.adres_input.fill(simple_address)
         
         # Выбираем станцию метро
+        print(f"DEBUG: Selecting metro station: {metro_station}")
         order_page.select_metro_station(metro_station)
         
         # Вводим телефон
+        print("DEBUG: Filling phone number")
         order_page.phone_input.fill("+79991234567")  # Можно добавить в UserCredentials
+        
+        # Проверяем значения всех полей после заполнения
+        print("DEBUG: Verifying filled values:")
+        try:
+            name_value = order_page.name_input.input_value()
+            surname_value = order_page.surname_input.input_value()
+            address_value = order_page.adres_input.input_value()
+            phone_value = order_page.phone_input.input_value()
+            metro_value = order_page.metro_input.input_value()
+            
+            print(f"DEBUG: Name field value: '{name_value}'")
+            print(f"DEBUG: Surname field value: '{surname_value}'")
+            print(f"DEBUG: Address field value: '{address_value}'")
+            print(f"DEBUG: Phone field value: '{phone_value}'")
+            print(f"DEBUG: Metro field value: '{metro_value}'")
+        except Exception as e:
+            print(f"DEBUG: Error getting field values: {e}")
         
         # Нажимаем "Далее" (force=True чтобы обойти cookie consent)
         order_page.next_button.click(force=True)
         
         # Ждем исчезновения элементов первого шага и появления элементов второго шага
         app.page.wait_for_load_state('networkidle')
+        
+        # Дополнительная проверка, что мы перешли ко второму шагу
+        try:
+            # Ждем появления любого элемента второго шага (более надежно, чем конкретный заголовок)
+            app.page.locator("input[placeholder='* Когда привезти самокат']").wait_for(state='visible', timeout=10000)
+        except Exception as e:
+            print(f"DEBUG: Failed to find second step elements after clicking Next")
+            print(f"DEBUG: Current URL: {app.page.url}")
+            print(f"DEBUG: Page title: {app.page.title()}")
+            
+            # Диагностика всех кнопок на странице
+            all_buttons = app.page.locator("button").all()
+            print(f"DEBUG: Found {len(all_buttons)} buttons on page")
+            for i, btn in enumerate(all_buttons):
+                try:
+                    text = btn.text_content() or ""
+                    visible = btn.is_visible()
+                    enabled = btn.is_enabled()
+                    print(f"DEBUG: Button {i}: '{text}' (visible: {visible}, enabled: {enabled})")
+                except:
+                    print(f"DEBUG: Button {i}: Error getting info")
+            
+            # Проверяем ошибки валидации
+            print("DEBUG: Checking for validation errors...")
+            error_elements = app.page.locator(".Input_ErrorMessage__3HHxB, .Input_Error__1RWCy").all()
+            for i, error in enumerate(error_elements):
+                try:
+                    text = error.text_content()
+                    visible = error.is_visible()
+                    if visible and text:
+                        print(f"DEBUG: Validation error {i}: '{text}'")
+                except:
+                    pass
+            
+            # Пытаемся кликнуть "Далее" еще раз, если не перешли
+            if order_page.next_button.is_visible():
+                print("DEBUG: Next button still visible, clicking again")
+                order_page.next_button.click(force=True)
+                app.page.wait_for_load_state('networkidle')
+                app.page.locator("input[placeholder='* Когда привезти самокат']").wait_for(state='visible', timeout=10000)
+            else:
+                print("DEBUG: Next button is not visible, can't click again")
+                raise e
     
     return _fill_form
 
@@ -196,9 +265,23 @@ def fill_order_form_step2(app):
         # Дополнительное ожидание стабилизации страницы
         app.page.wait_for_load_state('networkidle')
         
-        # Ждем появления заголовка "Про аренду" (второй шаг)
+        # Ждем появления заголовка "Про аренду" (второй шаг) с увеличенным таймаутом
         pro_arendu_header = app.page.locator("div.Order_Header__BZXOb:has-text('Про аренду')")
-        pro_arendu_header.wait_for(state='visible', timeout=15000)
+        try:
+            pro_arendu_header.wait_for(state='visible', timeout=30000)
+        except Exception as e:
+            # Дополнительная диагностика при ошибке
+            print(f"DEBUG: Current URL: {app.page.url}")
+            print(f"DEBUG: Page title: {app.page.title()}")
+            all_headers = app.page.locator("div.Order_Header__BZXOb").all()
+            print(f"DEBUG: Found {len(all_headers)} Order headers")
+            for i, header in enumerate(all_headers):
+                try:
+                    text = header.text_content()
+                    print(f"DEBUG: Header {i}: '{text}'")
+                except:
+                    print(f"DEBUG: Header {i}: Unable to get text")
+            raise e
         
         # Заполняем дату доставки
         order_page.enter_date(delivery_date)

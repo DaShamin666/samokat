@@ -24,7 +24,7 @@ class OrderPage(BasePage):
         #     # Выбор станции
         #     self.metro_choice.locator(f"text='{station_name}'").click()  # Клик на нужную станцию
         self.phone_input: Locator = self.page.locator("input[placeholder='* Телефон: на него позвонит курьер']")
-        self.next_button: Locator = self.page.locator("button.Button_Button__ra12g.Button_Middle__1CSJM")
+        self.next_button: Locator = self.page.locator("button.Button_Button__ra12g.Button_Middle__1CSJM:has-text('Далее')")
 
         #локаторы данные про аренду
         self.date_input: Locator = self.page.locator("input[placeholder='* Когда привезти самокат']")
@@ -48,8 +48,19 @@ class OrderPage(BasePage):
         
     def select_metro_station(self, station_name: str):
         """Выбирает станцию метро из выпадающего списка."""
+        # Кликаем по полю ввода станции метро
         self.metro_input.click()
-        self.metro_choice.locator(f"text='{station_name}'").click()
+        
+        # Ждем появления выпадающего списка
+        self.page.wait_for_timeout(1000)
+        
+        # Выбираем нужную станцию
+        station_option = self.metro_choice.locator(f"text='{station_name}'")
+        station_option.wait_for(state='visible', timeout=5000)
+        station_option.click()
+        
+        # Ждем закрытия выпадающего списка
+        self.page.wait_for_timeout(500)
     
     def enter_date(self, date: str):
         """Вводит дату доставки."""
