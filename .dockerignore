@@ -1,0 +1,73 @@
+# Git и версионирование
+.git
+.gitignore
+*.md
+
+# Python кеш и виртуальные окружения
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Виртуальные окружения
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE файлы
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Операционная система
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Результаты тестов и отчеты
+allure-results/
+allure-reports/
+screenshots/
+*.log
+test-results/
+playwright-report/
+
+# Docker файлы (исключаем из контекста сборки)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Временные файлы
+*.tmp
+*.temp
+.pytest_cache/
+

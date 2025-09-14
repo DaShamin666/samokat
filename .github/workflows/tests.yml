@@ -44,7 +44,7 @@ jobs:
         
     - name: 📊 Upload test results (if failed)
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: smoke-test-results
         path: |
@@ -91,7 +91,7 @@ jobs:
         
     - name: 📊 Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: regression-test-results-${{ matrix.browser }}
         path: |
@@ -139,7 +139,7 @@ jobs:
         
     - name: 📊 Upload Allure Results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: allure-results
         path: allure-results/
@@ -147,7 +147,7 @@ jobs:
         
     - name: 📷 Upload Screenshots
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: failed-test-screenshots
         path: |

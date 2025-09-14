@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # Основной сервис для запуска тестов
+  samokat-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: samokat-tests
+    environment:
+      # Конфигурация для тестов
+      - TEST_ENV=${TEST_ENV:-dev}
+      - TEST_MARKERS=${TEST_MARKERS:-smoke}
+      - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short}
+      # Дополнительные переменные окружения
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Монтируем директории для сохранения отчетов и артефактов
+      - ./allure-results:/app/allure-results
+      - ./allure-reports:/app/allure-reports
+      - ./screenshots:/app/screenshots
+      # Монтируем исходный код для разработки (опционально)
+      - type: bind
+        source: .
+        target: /app
+        read_only: false
+    networks:
+      - samokat-network
+    # Ограничения ресурсов
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # Сервис для smoke тестов (быстрые критические тесты)
+  samokat-smoke:
+    extends: samokat-tests
+    container_name: samokat-smoke
+    environment:
+      - TEST_ENV=${TEST_ENV:-dev}
+      - TEST_MARKERS=smoke
+      - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short --durations=10}
+
+  # Сервис для regression тестов (полные тесты)
+  samokat-regression:
+    extends: samokat-tests
+    container_name: samokat-regression
+    environment:
+      - TEST_ENV=${TEST_ENV:-dev}
+      - TEST_MARKERS=regression
+      - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short --durations=10}
+
+  # Сервис для запуска всех тестов
+  samokat-full:
+    extends: samokat-tests
+    container_name: samokat-full
+    environment:
+      - TEST_ENV=${TEST_ENV:-dev}
+      - TEST_MARKERS=
+      - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short --durations=10}
+
+  # Сервис для параллельного запуска тестов
+  samokat-parallel:
+    extends: samokat-tests
+    container_name: samokat-parallel
+    environment:
+      - TEST_ENV=${TEST_ENV:-dev}
+      - TEST_MARKERS=${TEST_MARKERS:-smoke}
+      - PYTEST_ARGS=${PYTEST_ARGS:--v --tb=short -n auto --durations=10}
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+
+  # Сервис с Allure отчетами
+  allure-serve:
+    image: frankescobar/allure-docker-service
+    container_name: samokat-allure
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: NONE
+      KEEP_HISTORY: 1
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-reports:/app/default-reports
+    networks:
+      - samokat-network
+    profiles:
+      - allure
+
+networks:
+  samokat-network:
+    driver: bridge
+
+# Volumes для персистентного хранения данных
+volumes:
+  allure-results:
+  allure-reports:
+  screenshots:
+
