@@ -89,3 +89,23 @@ class HomePage(BasePage):
         self.order_button_bottom.scroll_into_view_if_needed()
         self.order_button_bottom.click()
 
+    def verify_order_buttons_availability(self):
+        """Проверяет доступность обеих кнопок заказа."""
+        expect(self.order_button_top).to_be_visible()
+        expect(self.order_button_top).to_be_enabled()
+        self.order_button_bottom.scroll_into_view_if_needed()
+        expect(self.order_button_bottom).to_be_visible()
+        expect(self.order_button_bottom).to_be_enabled()
+
+    def verify_order_buttons_text(self):
+        """Проверяет текст на кнопках заказа."""
+        expect(self.order_button_top).to_have_text("Заказать")
+        self.order_button_bottom.scroll_into_view_if_needed()
+        expect(self.order_button_bottom).to_have_text("Заказать")
+
+    def verify_order_form_navigation(self):
+        """Проверяет, что произошел переход к форме заказа."""
+        # Этот метод будет использоваться после клика по кнопке заказа
+        # Проверка будет в OrderPage, так как форма заказа там
+        pass
+

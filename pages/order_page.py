@@ -30,7 +30,6 @@ class OrderPage(BasePage):
         self.order_success_header: Locator = self.page.locator("div.Order_Header__BZXOb")
         
     def select_metro_station(self, station_name: str):
-        """Выбирает станцию метро из выпадающего списка."""
 
         # Кликаем по полю метро
         self.metro_input.click()
@@ -44,7 +43,6 @@ class OrderPage(BasePage):
         expect(self.metro_input).to_have_value(station_name)
     
     def enter_date(self, date: str):
-        """Вводит дату доставки."""
         self.date_input.wait_for(state='visible')
         
         self.date_input.click()
@@ -111,17 +109,17 @@ class OrderPage(BasePage):
     def fill_minimal_demo_data(self, button_name: str = ""):
         """Заполняет минимальные данные для демонстрационных тестов."""
 
-        self.name_input.fill(f"Тест_{button_name}" if button_name else "Тест")
-        self.surname_input.fill("Пользователь")
-        self.adres_input.fill("ул. Тестовая 1")
+        self.name_input.fill("Иван")
+        self.surname_input.fill("Иванов")
+        self.adres_input.fill("ул. Тестовая, д. 1")
         
         self.metro_input.click()
         self.metro_choice.first.click()
         
         self.phone_input.fill("+79991234567")
         
-        expect(self.name_input).to_have_value(f"Тест_{button_name}" if button_name else "Тест")
-        expect(self.surname_input).to_have_value("Пользователь")
+        expect(self.name_input).to_have_value("Иван")
+        expect(self.surname_input).to_have_value("Иванов")
         expect(self.phone_input).to_have_value("+79991234567")
 
     def click_next_button(self):
@@ -154,3 +152,19 @@ class OrderPage(BasePage):
             return True
         except:
             return False
+
+    def verify_order_form_displayed(self):
+        """Проверяет, что форма заказа отображается."""
+        expect(self.name_input).to_be_visible()
+
+    def verify_step2_displayed(self):
+        """Проверяет, что отображается второй шаг формы."""
+        expect(self.date_input).to_be_visible()
+
+    def verify_order_success(self):
+        """Проверяет успешное оформление заказа."""
+        expect(self.order_success_header).to_be_visible()
+
+    def verify_form_validation_failed(self):
+        """Проверяет, что валидация формы не прошла (остались на первом шаге)."""
+        expect(self.name_input).to_be_visible()

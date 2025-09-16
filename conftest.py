@@ -217,3 +217,11 @@ def complete_order_from_button(app, click_order_button, complete_order_flow):
         expect(app.order_page.order_success_header).to_be_visible()
     
     return _complete_from_button
+
+@pytest.fixture
+def open_main_page(app,request):
+    env_name = request.config.getoption("--env")
+    config = environments[env_name]
+    with allure.step("открыть главную страницу"):
+        app.home_page.open(config.url)
+    return app
