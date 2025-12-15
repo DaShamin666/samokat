@@ -59,7 +59,7 @@ jobs:
         
     - name: 📊 Upload Allure Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: nightly-allure-results-${{ matrix.browser }}-${{ matrix.environment }}
         path: allure-results/
@@ -67,7 +67,7 @@ jobs:
         
     - name: 📷 Upload Screenshots on Failure
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: nightly-failed-screenshots-${{ matrix.browser }}-${{ matrix.environment }}
         path: |
